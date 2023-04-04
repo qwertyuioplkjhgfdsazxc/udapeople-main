@@ -132,7 +132,6 @@ jobs:
           command: |
             exit 0
             npm audit
-
   scan-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -145,7 +144,6 @@ jobs:
           command: |
             exit 0
             npm audit
-
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli
@@ -155,29 +153,27 @@ jobs:
           name: Install dependencies
           command: |
             yum install -y tar gzip
-       - run:
-           name: Ensure back-end infrastructure exists
-           command: |
-             aws cloudformation deploy \
-               --template-file .circleci/files/backend.yml \
-               --tags project=udapeople \
-               --stack-name "backend" \
-              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:5}
+      # - run:
+      #     name: Ensure back-end infrastructure exists
+      #     command: |
+      #       aws cloudformation deploy \
+      #         --template-file .circleci/files/backend.yml \
+      #         --tags project=udapeople \
+      #         --stack-name "backend" \
+      #         --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:5}
 
-      #- run:
-       
-      #    name: Ensure front-end infrastructure exist
-      #    command: |
-      #      aws cloudformation deploy \
-      #        --template-file .circleci/files/frontend.yml \
-      #        --tags project=udapeople \
-      #        --stack-name "frontend-${CIRCLE_WORKFLOW_ID:0:5}" \
-      #        --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:5}"
+      - run:
+          name: Ensure front-end infrastructure exist
+          command: |
+            aws cloudformation deploy \
+              --template-file .circleci/files/frontend.yml \
+              --tags project=udapeople \
+              --stack-name "frontend-${CIRCLE_WORKFLOW_ID:0:5}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:5}"
       - run:
           name: Add back-end ip to ansible inventory
           command: |
             aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> .circleci/ansible/inventory.txt
-
       - persist_to_workspace:
           root: ~/
           paths:
@@ -186,11 +182,11 @@ jobs:
       # - destroy_environment
   configure-infrastructure:
     docker:
-      - image: qwertyuioplkjhgfdsazxc/aws-node
+      - image: mareimorsy/aws-node
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["8e:38:54:85:4a:c8:39:6b:82:39:20:4c:27:da:72:b8"]
+          fingerprints: ["0d:a0:d2:30:e7:40:31:70:0e:69:45:04:ad:36:0b:8c"]
       # - run:
       #     name: "Install Dependencies"
       #     command: |
@@ -211,7 +207,7 @@ jobs:
 
   run-migrations:
     docker: 
-      - image: qwertyuioplkjhgfdsazxc/aws-node
+      - image: mareimorsy/aws-node
 
     steps:
       - checkout
@@ -223,7 +219,6 @@ jobs:
             npm install
             npm run premigrations
             npm run migrations
-
       # - run:
       #     name: Send migration results to memstash
       #     command: |
@@ -233,7 +228,7 @@ jobs:
 
   deploy-frontend:
     docker:
-      - image: qwertyuioplkjhgfdsazxc/aws-node
+      - image: mareimorsy/aws-node
     steps:
       - checkout
       - run:
@@ -248,22 +243,20 @@ jobs:
             npm run build:prod
             # aws s3 sync dist s3://udapeople-project
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:5} --recursive
-
 #       # Here's where you will add some code to rollback on failure      
                     
   deploy-backend:
     docker:
-      - image: qwertyuioplkjhgfdsazxc/aws-node
+      - image: mareimorsy/aws-node
     steps:
       - checkout
       - add_ssh_keys:
-          fingerprints: ["8e:38:54:85:4a:c8:39:6b:82:39:20:4c:27:da:72:b8"]
+          fingerprints: ["0d:a0:d2:30:e7:40:31:70:0e:69:45:04:ad:36:0b:8c"]
       - run:
           name: Deploy backend
           command: |
             export TYPEORM_HOST=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
             echo $TYPEORM_HOST >> .circleci/ansible/inventory.txt
-
             cd backend
             npm i
             npm run build
@@ -307,7 +300,7 @@ jobs:
 
   cloudfront-update:
     docker:
-      - image: qwertyuioplkjhgfdsazxc/aws-node
+      - image: mareimorsy/aws-node
     steps:
       - checkout
       - run:
@@ -325,11 +318,9 @@ jobs:
               --template-file .circleci/files/cloudfront.yml \
               --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:5}" \
               --stack-name InitialStack
-
-
   cleanup:
     docker:
-      - image: qwertyuioplkjhgfdsazxc/aws-node
+      - image: mareimorsy/aws-node
     steps:
       - checkout
       - run:
@@ -348,7 +339,6 @@ jobs:
               aws cloudformation delete-stack --stack-name "frontend-${OldWorkflowID}"
             fi
             
-
 workflows:
   default:
     jobs:
@@ -362,11 +352,11 @@ workflows:
       #     requires: [build-backend]
       # - scan-frontend:
       #     requires: [build-frontend]
-       - deploy-infrastructure:
-           # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-           filters:
-             branches: 
-              only: [main]
+      # - deploy-infrastructure:
+      #     # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      #     filters:
+      #       branches: 
+      #         only: [main]
       - configure-infrastructure
           # requires: [deploy-infrastructure]
       # - run-migrations
