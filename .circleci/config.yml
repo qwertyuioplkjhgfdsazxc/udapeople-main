@@ -18,46 +18,46 @@ commands:
             aws cloudformation delete-stack --stack-name backend-${CIRCLE_WORKFLOW_ID:0:5}
             aws s3 rm s3://udapeople-<<parameters.Workflow_ID>> --recursive
             aws cloudformation delete-stack --stack-name frontend-<< parameters.Workflow_ID >>
-  # notify_on_failure:
-  #     steps:
-  #       - slack/notify:
-  #           event: fail
-  #           channel: $SLACK_DEFAULT_CHANNEL
-  #           template: basic_fail_1
-  # notify_on_success:
-  #     steps:
-  #       - slack/notify:
-  #           event: pass
-  #           channel: $SLACK_DEFAULT_CHANNEL
-  #           template: success_tagged_deployment_1
+  notify_on_failure:
+      steps:
+        - slack/notify:
+            event: fail
+            channel: $SLACK_DEFAULT_CHANNEL
+            template: basic_fail_1
+  notify_on_success:
+      steps:
+        - slack/notify:
+            event: pass
+            channel: $SLACK_DEFAULT_CHANNEL
+            template: success_tagged_deployment_1
 
 
-#   revert-migrations:
-#     description: Revert the last migration
-#     parameters:
-#       Workflow_ID:
-#         type: string
-#         default: ${CIRCLE_WORKFLOW_ID:0:7}
-#     steps:
-#       - run:
-#           name: Revert migrations
-#           when: on_fail
-#           command: |
-#             SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_BUCKET}/migration_<< parameters.Workflow_ID >>)
-#             echo "$SUCCESS"
-#             # Logic for reverting the database state
-#             if (( $SUCCESS == 1 ));
-#             then
-#               cd ~/project/backend
-#               npm install
-#               npm run migration:revert
-#             fi
+  revert-migrations:
+    description: Revert the last migration
+    parameters:
+      Workflow_ID:
+        type: string
+        default: ${CIRCLE_WORKFLOW_ID:0:7}
+    steps:
+      - run:
+          name: Revert migrations
+          when: on_fail
+          command: |
+            SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_BUCKET}/migration_<< parameters.Workflow_ID >>)
+            echo "$SUCCESS"
+            # Logic for reverting the database state
+            if (( $SUCCESS == 1 ));
+            then
+              cd ~/project/backend
+              npm install
+              npm run migration:revert
+            fi
             
 jobs:
 
   build-frontend:
     docker:
-      - image: cimg/node:13.8.0
+      - image: circleci/node:13.8.0
     # working_directory: ~/project/.circleci/ansible/inventory.txt
     steps:
       - checkout
@@ -75,7 +75,7 @@ jobs:
 
   build-backend:
     docker:
-      - image: cimg/node:13.8.0
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
@@ -92,7 +92,7 @@ jobs:
 
   test-frontend:
     docker:
-      - image: cimg/node:13.8.0
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
@@ -108,7 +108,7 @@ jobs:
                 
   test-backend:
     docker:
-      - image: cimg/node:13.8.0
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
@@ -122,7 +122,7 @@ jobs:
             
   scan-frontend:
     docker:
-      - image: cimg/node:13.8.0
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
@@ -134,7 +134,7 @@ jobs:
             npm audit
   scan-backend:
     docker:
-      - image: cimg/node:13.8.0
+      - image: circleci/node:13.8.0
     steps:
       - checkout
       - restore_cache:
@@ -153,23 +153,23 @@ jobs:
           name: Install dependencies
           command: |
             yum install -y tar gzip
+      # - run:
+      #     name: Ensure back-end infrastructure exists
+      #     command: |
+      #       aws cloudformation deploy \
+      #         --template-file .circleci/files/backend.yml \
+      #         --tags project=udapeople \
+      #         --stack-name "backend" \
+      #         --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:5}
+
       - run:
-          name: Ensure back-end infrastructure exists
+          name: Ensure front-end infrastructure exist
           command: |
             aws cloudformation deploy \
-              --template-file .circleci/files/backend.yml \
+              --template-file .circleci/files/frontend.yml \
               --tags project=udapeople \
-              --stack-name "backend" \
-              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:5}
-
-#       - run:
-#           name: Ensure front-end infrastructure exist
-#           command: |
-#             aws cloudformation deploy \
-#               --template-file .circleci/files/frontend.yml \
-#               --tags project=udapeople \
-#               --stack-name "frontend-${CIRCLE_WORKFLOW_ID:0:5}" \
-#               --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:5}"
+              --stack-name "frontend-${CIRCLE_WORKFLOW_ID:0:5}" \
+              --parameter-overrides ID="${CIRCLE_WORKFLOW_ID:0:5}"
       - run:
           name: Add back-end ip to ansible inventory
           command: |
@@ -193,57 +193,57 @@ jobs:
       #       apk add ansible gzip openssh-client
       # - attach_workspace:
       #     at: ~/
-#      - run:
-#           name: Configure server
-#           command: |
-#             ls
-#             pwd
-#             cd .circleci/ansible
-#             aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> inventory.txt
-#             cat inventory.txt
-#             # ansible-playbook -i inventory.txt configure-server.yml -vv
-#             ansible-playbook -i inventory.txt prometheus-exporter.yml -vv
+      - run:
+          name: Configure server
+          command: |
+            ls
+            pwd
+            cd .circleci/ansible
+            aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> inventory.txt
+            cat inventory.txt
+            # ansible-playbook -i inventory.txt configure-server.yml -vv
+            ansible-playbook -i inventory.txt prometheus-exporter.yml -vv
+      # Here's where you will add some code to rollback on failure      
+
+  run-migrations:
+    docker: 
+      - image: mareimorsy/aws-node
+
+    steps:
+      - checkout
+      - run:
+          name: Run migrations
+          command: |
+            export TYPEORM_HOST=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+            cd backend
+            npm install
+            npm run premigrations
+            npm run migrations
+      # - run:
+      #     name: Send migration results to memstash
+      #     command: |
+      #       # Your code here
+      #       exit 1
+     # Here's where you will add some code to rollback on failure      
+
+  deploy-frontend:
+    docker:
+      - image: mareimorsy/aws-node
+    steps:
+      - checkout
+      - run:
+          name: Deploy Frontend
+          command: |
+            export BACKEND_PUBLIC_IP=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+             echo "API_URL=http://$BACKEND_PUBLIC_IP:3030" 
+            # Build the frontend
+            cd frontend
+            echo "API_URL=http://$BACKEND_PUBLIC_IP:3030" > .env
+            npm install
+            npm run build:prod
+            # aws s3 sync dist s3://udapeople-project
+            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:5} --recursive
 #       # Here's where you will add some code to rollback on failure      
-
-#   run-migrations:
-#     docker: 
-#       - image: mareimorsy/aws-node
-
-#     steps:
-#       - checkout
-#       - run:
-#           name: Run migrations
-#           command: |
-#             export TYPEORM_HOST=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
-#             cd backend
-#             npm install
-#             npm run premigrations
-#             npm run migrations
-#       # - run:
-#       #     name: Send migration results to memstash
-#       #     command: |
-#       #       # Your code here
-#       #       exit 1
-#      # Here's where you will add some code to rollback on failure      
-
-#   deploy-frontend:
-#     docker:
-#       - image: mareimorsy/aws-node
-#     steps:
-#       - checkout
-#       - run:
-#           name: Deploy Frontend
-#           command: |
-#             export BACKEND_PUBLIC_IP=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
-#              echo "API_URL=http://$BACKEND_PUBLIC_IP:3030" 
-#             # Build the frontend
-#             cd frontend
-#             echo "API_URL=http://$BACKEND_PUBLIC_IP:3030" > .env
-#             npm install
-#             npm run build:prod
-#             # aws s3 sync dist s3://udapeople-project
-#             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:5} --recursive
-# #       # Here's where you will add some code to rollback on failure      
                     
   deploy-backend:
     docker:
@@ -341,23 +341,23 @@ jobs:
             
 workflows:
   default:
-    # jobs:
-    #   - build-frontend
-    #   - build-backend
-    #   - test-frontend:
-    #       requires: [build-frontend]
-    #   - test-backend:
-    #       requires: [build-backend]
-    #   - scan-backend:
-    #       requires: [build-backend]
-    #   - scan-frontend:
-    #       requires: [build-frontend]
-      - deploy-infrastructure:
-          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-            branches: 
-              only: [main]
-      #- configure-infrastructure
+    jobs:
+      # - build-frontend
+      # - build-backend
+      # - test-frontend:
+      #     requires: [build-frontend]
+      # - test-backend:
+      #     requires: [build-backend]
+      # - scan-backend:
+      #     requires: [build-backend]
+      # - scan-frontend:
+      #     requires: [build-frontend]
+      # - deploy-infrastructure:
+      #     # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      #     filters:
+      #       branches: 
+      #         only: [main]
+      - configure-infrastructure
           # requires: [deploy-infrastructure]
       # - run-migrations
           # requires: [configure-infrastructure]
