@@ -205,20 +205,20 @@ jobs:
             ansible-playbook -i inventory.txt prometheus-exporter.yml -vv
       # Here's where you will add some code to rollback on failure      
 
-  run-migrations:
-    docker: 
-      - image: mareimorsy/aws-node
+  # run-migrations:
+  #   docker: 
+  #     - image: mareimorsy/aws-node
 
-    steps:
-      - checkout
-      - run:
-          name: Run migrations
-          command: |
-            export TYPEORM_HOST=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
-            cd backend
-            npm install
-            npm run premigrations
-            npm run migrations
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Run migrations
+  #         command: |
+  #           export TYPEORM_HOST=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+  #           cd backend
+  #           npm install
+  #           npm run premigrations
+  #           npm run migrations
       # - run:
       #     name: Send migration results to memstash
       #     command: |
@@ -226,24 +226,24 @@ jobs:
       #       exit 1
      # Here's where you will add some code to rollback on failure      
 
-  deploy-frontend:
-    docker:
-      - image: mareimorsy/aws-node
-    steps:
-      - checkout
-      - run:
-          name: Deploy Frontend
-          command: |
-            export BACKEND_PUBLIC_IP=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
-             echo "API_URL=http://$BACKEND_PUBLIC_IP:3030" 
-            # Build the frontend
-            cd frontend
-            echo "API_URL=http://$BACKEND_PUBLIC_IP:3030" > .env
-            npm install
-            npm run build:prod
-            # aws s3 sync dist s3://udapeople-project
-            aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:5} --recursive
-#       # Here's where you will add some code to rollback on failure      
+#   deploy-frontend:
+#     docker:
+#       - image: mareimorsy/aws-node
+#     steps:
+#       - checkout
+#       - run:
+#           name: Deploy Frontend
+#           command: |
+#             export BACKEND_PUBLIC_IP=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+#              echo "API_URL=http://$BACKEND_PUBLIC_IP:3030" 
+#             # Build the frontend
+#             cd frontend
+#             echo "API_URL=http://$BACKEND_PUBLIC_IP:3030" > .env
+#             npm install
+#             npm run build:prod
+#             # aws s3 sync dist s3://udapeople-project
+#             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:5} --recursive
+# #       # Here's where you will add some code to rollback on failure      
                     
   deploy-backend:
     docker:
@@ -357,8 +357,8 @@ workflows:
           filters:
             branches: 
               only: [main]
-      # - configure-infrastructure
-          # requires: [deploy-infrastructure]
+      - configure-infrastructure
+          requires: [deploy-infrastructure]
       # - run-migrations
           # requires: [configure-infrastructure]
       # - deploy-frontend:
