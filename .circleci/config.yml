@@ -180,30 +180,30 @@ jobs:
             - project/.circleci/ansible/inventory.txt
 #       # Here's where you will add some code to rollback on failure      
       # - destroy_environment
-  # configure-infrastructure:
-  #   docker:
-  #     - image: mareimorsy/aws-node
-  #   steps:
-  #     - checkout
-  #     - add_ssh_keys:
-  #         fingerprints: ["8e:38:54:85:4a:c8:39:6b:82:39:20:4c:27:da:72:b8"]
-      # - run:
-      #     name: "Install Dependencies"
-      #     command: |
-      #       apk add ansible gzip openssh-client
-      # - attach_workspace:
-      #     at: ~/
-      # - run:
-      #     name: Configure server
-      #     command: |
-      #       ls
-      #       pwd
-      #       cd .circleci/ansible
-      #       aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> inventory.txt
-      #       cat inventory.txt
-      #       # ansible-playbook -i inventory.txt configure-server.yml -vv
-      #       ansible-playbook -i inventory.txt prometheus-exporter.yml -vv
-      # # Here's where you will add some code to rollback on failure      
+  configure-infrastructure:
+    docker:
+      - image: mareimorsy/aws-node
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["8e:38:54:85:4a:c8:39:6b:82:39:20:4c:27:da:72:b8"]
+      - run:
+          name: "Install Dependencies"
+          command: |
+            apk add ansible gzip openssh-client
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Configure server
+          command: |
+            ls
+            pwd
+            cd .circleci/ansible
+            aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> inventory.txt
+            cat inventory.txt
+            # ansible-playbook -i inventory.txt configure-server.yml -vv
+            ansible-playbook -i inventory.txt prometheus-exporter.yml -vv
+      # Here's where you will add some code to rollback on failure      
 
   # run-migrations:
   #   docker: 
