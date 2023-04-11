@@ -32,26 +32,26 @@ commands:
             template: success_tagged_deployment_1
 
 
-  revert-migrations:
-    description: Revert the last migration
-    parameters:
-      Workflow_ID:
-        type: string
-        default: ${CIRCLE_WORKFLOW_ID:0:7}
-    steps:
-      - run:
-          name: Revert migrations
-          when: on_fail
-          command: |
-            SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_BUCKET}/migration_<< parameters.Workflow_ID >>)
-            echo "$SUCCESS"
-            # Logic for reverting the database state
-            if (( $SUCCESS == 1 ));
-            then
-              cd ~/project/backend
-              npm install
-              npm run migration:revert
-            fi
+  # revert-migrations:
+  #   description: Revert the last migration
+  #   parameters:
+  #     Workflow_ID:
+  #       type: string
+  #       default: ${CIRCLE_WORKFLOW_ID:0:7}
+  #   steps:
+  #     - run:
+  #         name: Revert migrations
+  #         when: on_fail
+  #         command: |
+  #           SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_BUCKET}/migration_<< parameters.Workflow_ID >>)
+  #           echo "$SUCCESS"
+  #           # Logic for reverting the database state
+  #           if (( $SUCCESS == 1 ));
+  #           then
+  #             cd ~/project/backend
+  #             npm install
+  #             npm run migration:revert
+  #           fi
             
 jobs:
 
@@ -180,42 +180,42 @@ jobs:
             - project/.circleci/ansible/inventory.txt
       # # Here's where you will add some code to rollback on failure      
       # - destroy_environment
-  configure-infrastructure:
-    docker:
-      - image: mareimorsy/aws-node
-    steps:
-      - checkout
-      - add_ssh_keys:
-          fingerprints: ["8e:38:54:85:4a:c8:39:6b:82:39:20:4c:27:da:72:b8"]
-      # - run:
-      #     name: "Install Dependencies"
-      #     command: |
-      #       apk add ansible gzip openssh-client
-      - attach_workspace:
-          at: ~/
-      - run:
-          name: Configure server
-          command: |
-            cd .circleci/ansible
-            aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> inventory.txt
-            cat inventory.txt
-            ansible-playbook -i inventory.txt configure-server.yml
+  # configure-infrastructure:
+  #   docker:
+  #     - image: mareimorsy/aws-node
+  #   steps:
+  #     - checkout
+  #     - add_ssh_keys:
+  #         fingerprints: ["8e:38:54:85:4a:c8:39:6b:82:39:20:4c:27:da:72:b8"]
+  #     # - run:
+  #     #     name: "Install Dependencies"
+  #     #     command: |
+  #     #       apk add ansible gzip openssh-client
+  #     - attach_workspace:
+  #         at: ~/
+  #     - run:
+  #         name: Configure server
+  #         command: |
+  #           cd .circleci/ansible
+  #           aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text >> inventory.txt
+  #           cat inventory.txt
+  #           ansible-playbook -i inventory.txt configure-server.yml
       # Here's where you will add some code to rollback on failure      
 
-  run-migrations:
-    docker: 
-      - image: mareimorsy/aws-node
+  # run-migrations:
+  #   docker: 
+  #     - image: mareimorsy/aws-node
 
-    steps:
-      - checkout
-      - run:
-          name: Run migrations
-          command: |
-            export TYPEORM_HOST=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
-            cd backend
-            npm install
-            npm run premigrations
-            npm run migrations
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Run migrations
+  #         command: |
+  #           export TYPEORM_HOST=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+  #           cd backend
+  #           npm install
+  #           npm run premigrations
+  #           npm run migrations
       # - run:
       #     name: Send migration results to memstash
       #     command: |
