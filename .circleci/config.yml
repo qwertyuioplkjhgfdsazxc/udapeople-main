@@ -158,7 +158,7 @@ jobs:
           command: |
             aws cloudformation deploy \
               --template-file .circleci/files/backend.yml \
-              --tags project=udapeople \
+              --tags project=udapeople-main \
               --stack-name "backend" \
               --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:5}
 
