@@ -357,7 +357,7 @@ workflows:
           filters:
             branches: 
               only: [master]
-      - configure-infrastructure
+      - configure-infrastructure:gb
           requires: [deploy-infrastructure]
       # - run-migrations
           # requires: [configure-infrastructure]
