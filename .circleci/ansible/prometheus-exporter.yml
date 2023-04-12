@@ -25,7 +25,7 @@
     - name: "install node exporter."
       become: true
       unarchive:
-        src: https://github.com/prometheus/node_exporter/releases/download/v0.17.0/node_exporter-0.17.0.linux-amd64.tar.gz
+        src: "https://github.com/prometheus/node_exporter/releases/download/v0.17.0/node_exporter-0.17.0.linux-amd64.tar.gz"
         dest: /tmp
         remote_src: yes
         mode: 'u+x,g+x,o+x'
