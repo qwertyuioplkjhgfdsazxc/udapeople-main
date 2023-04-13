@@ -205,20 +205,20 @@ jobs:
             # ansible-playbook -i inventory.txt prometheus-exporter.yml -vv
       # Here's where you will add some code to rollback on failure      
 
-  # run-migrations:
-  #   docker: 
-  #     - image: mareimorsy/aws-node
+  run-migrations:
+    docker: 
+      - image: mareimorsy/aws-node
 
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Run migrations
-  #         command: |
-  #           export TYPEORM_HOST=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
-  #           cd backend
-  #           npm install
-  #           npm run premigrations
-  #           npm run migrations
+    steps:
+      - checkout
+      - run:
+          name: Run migrations
+          command: |
+            export TYPEORM_HOST=$(aws ec2 describe-instances --region us-east-1 --query 'Reservations[*].Instances[*].PublicIpAddress' --output text)
+            cd backend
+            npm install
+            npm run premigrations
+            npm run migrations
       # - run:
       #     name: Send migration results to memstash
       #     command: |
@@ -352,14 +352,14 @@ workflows:
       #     requires: [build-backend]
       # - scan-frontend:
       #     requires: [build-frontend]
-      - deploy-infrastructure:
-          # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
-          filters:
-            branches: 
-              only: [master]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-      # - run-migrations
+      # - deploy-infrastructure:
+      #     # requires: [test-frontend, test-backend, scan-frontend, scan-backend]
+      #     filters:
+      #       branches: 
+      #         only: [master]
+      # - configure-infrastructure:
+      #     requires: [deploy-infrastructure]
+      - run-migrations
           # requires: [configure-infrastructure]
       # - deploy-frontend:
       #     requires: [deploy-infrastructure]
