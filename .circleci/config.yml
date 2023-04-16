@@ -108,7 +108,7 @@ jobs:
                 
   test-backend:
     docker:
-      - image: circleci/node:13.8.0
+      - image: circleci/node:17.8.0
     steps:
       - checkout
       - restore_cache:
@@ -343,7 +343,7 @@ workflows:
   default:
     jobs:
       # - build-frontend
-      # - build-backend
+      - build-backend
       # - test-frontend:
       #     requires: [build-frontend]
       - test-backend:
