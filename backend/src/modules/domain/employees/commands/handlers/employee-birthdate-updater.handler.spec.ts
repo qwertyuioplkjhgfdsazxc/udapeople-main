@@ -10,9 +10,9 @@ describe('Employee Birthdate Updater', () => {
           save: jest.fn(),
           findById: jest.fn().mockResolvedValue([]),
         } as any),
-    // );
+    );
 
-    // const employeeRepository = new MockEmployeeRepository();
+    const employeeRepository = new MockEmployeeRepository();
 
     it('should get and employee and add it to the repository', async () => {
       // Arrange
